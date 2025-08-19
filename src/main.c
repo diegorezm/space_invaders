@@ -1,46 +1,26 @@
 #include "raylib.h"
-#include <stdio.h>
+#include <stdlib.h>
 
-// SPACESHIP
-//
-typedef struct {
-  Texture2D image;
-  Vector2 pos;
-  int speed;
-} Spaceship;
+#define da_append(da, x)                                                       \
+  do {                                                                         \
+    if ((da).count >= (da).capacity) {                                         \
+      if ((da).capacity == 0) {                                                \
+        (da).capacity = 256;                                                   \
+      } else {                                                                 \
+        (da).capacity *= 2;                                                    \
+      }                                                                        \
+      (da).items = realloc((da).items, (da).capacity * sizeof(*(da).items));   \
+    }                                                                          \
+    (da).items[(da).count++] = (x);                                            \
+  } while (0)
 
-Spaceship Spaceship_Create() {
-  Texture2D image = LoadTexture("assets/spaceship.png");
-
-  Vector2 pos = {.x = (GetScreenWidth() - image.width) / 2,
-                 .y = GetScreenHeight() - image.height};
-
-  int speed = 7;
-
-  Spaceship spaceship = {image, pos, speed};
-  return spaceship;
-}
-
-void Spaceship_Draw(Spaceship *sp) {
-  DrawTextureV(sp->image, sp->pos, RAYWHITE);
-}
-void Spaceship_Move_right(Spaceship *sp) {
-  sp->pos.x += sp->speed;
-
-  if (sp->pos.x > GetScreenWidth() - sp->image.width) {
-    sp->pos.x = GetScreenWidth() - sp->image.width;
-  }
-}
-void Spaceship_Move_left(Spaceship *sp) {
-  sp->pos.x -= sp->speed;
-
-  if (sp->pos.x < 0) {
-    sp->pos.x = 0;
-  }
-}
-
-void Spaceship_Fire(Spaceship *sp) {}
-void Spaceship_Unload(Spaceship *sp) { UnloadTexture(sp->image); }
+#define da_remove_at(da, index)                                                \
+  do {                                                                         \
+    if ((index) >= 0 && (index) < (da).count) {                                \
+      (da).items[index] = (da).items[(da).count - 1];                          \
+      (da).count--;                                                            \
+    }                                                                          \
+  } while (0)
 
 // Laser
 //
@@ -66,9 +46,87 @@ void Laser_Update(Laser *laser) {
 void Laser_Draw(Laser *laser) {
   if (laser->isActive) {
     Color laserColor = {243, 216, 63, 255};
-    DrawRectangle(laser->pos.x, laser->pos.y, 4, 15, laserColor);
+    DrawRectangleV(laser->pos, (Vector2){4, 15}, laserColor);
   }
 }
+
+// Lasers list
+typedef struct {
+  Laser *items;
+  int count;
+  int capacity;
+} Lasers;
+
+void Lasers_Remove_inactive(Lasers *lasers) {
+  for (int i = 0; i < lasers->count; i++) {
+    Laser laser = lasers->items[i];
+    if (!laser.isActive) {
+      da_remove_at(*lasers, i);
+    }
+  }
+}
+
+void Lasers_Draw(Lasers *lasers) {
+  for (int i = 0; i < lasers->count; ++i) {
+    Laser_Draw(&lasers->items[i]);
+  }
+}
+
+void Lasers_Update(Lasers *lasers) {
+  for (int i = 0; i < lasers->count; i++) {
+    Laser_Update(&lasers->items[i]);
+  }
+  Lasers_Remove_inactive(lasers);
+}
+
+// SPACESHIP
+//
+typedef struct {
+  Texture2D image;
+  Vector2 pos;
+  int speed;
+  Lasers lasers;
+} Spaceship;
+
+Spaceship Spaceship_Create() {
+  Texture2D image = LoadTexture("assets/spaceship.png");
+
+  Vector2 pos = {.x = (GetScreenWidth() - image.width) / 2,
+                 .y = GetScreenHeight() - image.height};
+
+  int speed = 7;
+  Lasers lasers = {0};
+
+  Spaceship spaceship = {image, pos, speed, lasers};
+  return spaceship;
+}
+
+void Spaceship_Draw(Spaceship *sp) {
+  DrawTextureV(sp->image, sp->pos, RAYWHITE);
+}
+void Spaceship_Move_right(Spaceship *sp) {
+  sp->pos.x += sp->speed;
+
+  if (sp->pos.x > GetScreenWidth() - sp->image.width) {
+    sp->pos.x = GetScreenWidth() - sp->image.width;
+  }
+}
+void Spaceship_Move_left(Spaceship *sp) {
+  sp->pos.x -= sp->speed;
+
+  if (sp->pos.x < 0) {
+    sp->pos.x = 0;
+  }
+}
+
+void Spaceship_Fire(Spaceship *sp) {
+  Laser laser = {
+      (Vector2){.x = sp->pos.x + sp->image.width / 2 - 2, .y = sp->pos.y - 15},
+      -6, true};
+
+  da_append(sp->lasers, laser);
+}
+void Spaceship_Unload(Spaceship *sp) { UnloadTexture(sp->image); }
 
 int main(void) {
   Color grey = {29, 29, 27, 255};
@@ -76,26 +134,28 @@ int main(void) {
   int screenHeigth = 700;
 
   InitWindow(screenWidth, screenHeigth, "Space Invaders");
-
-  Spaceship sp = Spaceship_Create();
-  Laser laser = Laser_Create((Vector2){.x = 100, .y = 100}, 7);
-
   SetTargetFPS(60);
 
-  while (!WindowShouldClose()) {
+  Spaceship sp = Spaceship_Create();
+  static double lastFireTime = 0;
 
+  while (!WindowShouldClose()) {
+    double now = GetTime();
     if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
       Spaceship_Move_right(&sp);
     } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
       Spaceship_Move_left(&sp);
+    } else if (IsKeyDown(KEY_SPACE) && now - lastFireTime > 0.25) {
+      Spaceship_Fire(&sp);
+      lastFireTime = now;
     }
 
-    Laser_Update(&laser);
+    Lasers_Update(&sp.lasers);
 
     BeginDrawing();
     ClearBackground(grey);
     Spaceship_Draw(&sp);
-    Laser_Draw(&laser);
+    Lasers_Draw(&sp.lasers);
     EndDrawing();
   }
   Spaceship_Unload(&sp);
