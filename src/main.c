@@ -299,6 +299,52 @@ typedef struct {
   Texture2D image;
   Vector2 pos;
   int speed;
+  bool isAlive;
+} Mysteryship;
+
+Mysteryship Mysteryship_Create(Vector2 pos) {
+  Texture2D image = LoadTexture("assets/mystery.png");
+  Mysteryship mystery = {image, pos, 7, false};
+  return mystery;
+}
+
+void Mysteryship_Spawn(Mysteryship *mystery) {
+  mystery->pos.y = 90;
+  int side = GetRandomValue(0, 1);
+
+  if (side == 0) {
+    mystery->pos.x = 0;
+    mystery->speed = 3;
+  } else {
+    mystery->pos.x = GetScreenWidth() + mystery->image.width;
+    mystery->speed = -3;
+  }
+  mystery->isAlive = true;
+}
+
+void Mysteryship_Update(Mysteryship *mystery) {
+  if (mystery->isAlive) {
+    mystery->pos.x += mystery->speed;
+    if (mystery->pos.x > GetScreenWidth() - mystery->image.width ||
+        mystery->pos.x < 0) {
+      mystery->isAlive = false;
+    }
+  }
+}
+void Mysteryship_Draw(Mysteryship *mystery) {
+  if (mystery->isAlive) {
+    DrawTextureV(mystery->image, mystery->pos, WHITE);
+  }
+}
+
+void Mysteryship_Unload(Mysteryship *mystery) { UnloadTexture(mystery->image); }
+
+// SPACESHIP
+//
+typedef struct {
+  Texture2D image;
+  Vector2 pos;
+  int speed;
   Lasers lasers;
 } Spaceship;
 
@@ -356,10 +402,14 @@ int main(void) {
   Aliens aliens = Aliens_Create();
 
   Spaceship sp = Spaceship_Create();
+  Mysteryship mystery = Mysteryship_Create((Vector2){100, 100});
 
   static double lastPlayerFireTime = 0;
   static double lastAlienFireTime = 0;
   static double alienShootInterval = 0.50;
+
+  float mysteryShipSpawnInterval = GetRandomValue(10, 20);
+  float lastTimeMysteryShipSpawn = 0.0;
 
   int aliensDirection = 1;
 
@@ -374,6 +424,13 @@ int main(void) {
       lastPlayerFireTime = now;
     }
 
+    if (now - lastTimeMysteryShipSpawn > mysteryShipSpawnInterval) {
+      Mysteryship_Spawn(&mystery);
+      lastTimeMysteryShipSpawn = GetTime();
+      mysteryShipSpawnInterval = GetRandomValue(10, 20);
+    }
+
+    Mysteryship_Update(&mystery);
     Lasers_Update(&sp.lasers);
     Aliens_Move(&aliens, &aliensDirection);
     Alien_Shoot(&aliens, &alienLasers, alienShootInterval, &lastAlienFireTime);
@@ -384,6 +441,7 @@ int main(void) {
     Spaceship_Draw(&sp);
     Aliens_Draw(&aliens);
     Obstacles_Draw(obstacles, 4);
+    Mysteryship_Draw(&mystery);
     Lasers_Draw(&sp.lasers);
     Lasers_Draw(&alienLasers);
     EndDrawing();
@@ -391,6 +449,8 @@ int main(void) {
 
   Spaceship_Unload(&sp);
   Aliens_Unload_images();
+  Mysteryship_Unload(&mystery);
+
   CloseWindow();
   return 0;
 }
