@@ -1,5 +1,26 @@
 #include "raylib.h"
+#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define OBSTACLE_GRID_ROWS 13
+#define OBSTACLE_GRID_COLS 23
+
+static const int OBSTACLE_GRID[13][23] = {
+    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+    {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0},
+    {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
+    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}};
 
 #define da_append(da, x)                                                       \
   do {                                                                         \
@@ -79,6 +100,86 @@ void Lasers_Update(Lasers *lasers) {
   Lasers_Remove_inactive(lasers);
 }
 
+// BLOCK
+//
+typedef struct {
+  Vector2 pos;
+} Block;
+
+typedef struct {
+  Block *items;
+  int count;
+  int capacity;
+} Blocks;
+
+Block Block_Create(Vector2 pos) {
+  Block block = {pos};
+  return block;
+}
+
+void Block_Draw(Block *block) {
+  Color blockColor = {243, 216, 63, 255};
+  DrawRectangle(block->pos.x, block->pos.y, 3, 3, blockColor);
+}
+
+// OBSTACLE
+//
+typedef struct {
+  Vector2 pos;
+  int grid[OBSTACLE_GRID_ROWS][OBSTACLE_GRID_COLS];
+  Blocks blocks;
+} Obstacle;
+
+Obstacle Obstacle_Create(Vector2 pos) {
+  // grid that represents the obstacle
+
+  Blocks blocks = {0};
+  Obstacle obstacle = {0};
+  obstacle.pos = pos;
+
+  memcpy(obstacle.grid, OBSTACLE_GRID, sizeof(OBSTACLE_GRID));
+
+  // positioning blocks in the correct grid space
+  for (size_t row = 0; row < OBSTACLE_GRID_ROWS; ++row) {
+    for (size_t col = 0; col < OBSTACLE_GRID_COLS; ++col) {
+      if (OBSTACLE_GRID[row][col] == 1) {
+        float pos_x = obstacle.pos.x + col * 3;
+        float pos_y = obstacle.pos.y + row * 3;
+
+        Block block = Block_Create((Vector2){pos_x, pos_y});
+        da_append(blocks, block);
+      }
+    }
+  }
+
+  obstacle.blocks = blocks;
+
+  return obstacle;
+}
+
+void Obstacle_Draw(Obstacle *obstacle) {
+  for (size_t i = 0; i < obstacle->blocks.count; ++i) {
+    Block_Draw(&obstacle->blocks.items[i]);
+  }
+}
+
+Obstacle *Obstacles_Create() {
+  Obstacle *obstacles = malloc(4 * sizeof(Obstacle));
+  int obstacleWidth = sizeof(OBSTACLE_GRID[0]) * 3;
+  float gap = (GetScreenWidth() - (4 * obstacleWidth)) / 5;
+  for (size_t i = 0; i < 4; i++) {
+    float offsetX = (i + 1) * gap + i * obstacleWidth;
+    obstacles[i] = Obstacle_Create((Vector2){offsetX, GetScreenHeight() - 100});
+  }
+  return obstacles;
+}
+
+void Obstacles_Draw(Obstacle *obstacles, size_t count) {
+  for (size_t i = 0; i < count; i++) {
+    Obstacle_Draw(&obstacles[i]);
+  }
+}
+
 // SPACESHIP
 //
 typedef struct {
@@ -136,7 +237,10 @@ int main(void) {
   InitWindow(screenWidth, screenHeigth, "Space Invaders");
   SetTargetFPS(60);
 
+  Obstacle *obstacles = Obstacles_Create();
+
   Spaceship sp = Spaceship_Create();
+
   static double lastFireTime = 0;
 
   while (!WindowShouldClose()) {
@@ -155,6 +259,7 @@ int main(void) {
     BeginDrawing();
     ClearBackground(grey);
     Spaceship_Draw(&sp);
+    Obstacles_Draw(obstacles, 4);
     Lasers_Draw(&sp.lasers);
     EndDrawing();
   }
