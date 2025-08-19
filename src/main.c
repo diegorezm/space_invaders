@@ -4,24 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define OBSTACLE_GRID_ROWS 13
-#define OBSTACLE_GRID_COLS 23
-
-static const int OBSTACLE_GRID[13][23] = {
-    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
-    {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0},
-    {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
-    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}};
-
 #define da_append(da, x)                                                       \
   do {                                                                         \
     if ((da).count >= (da).capacity) {                                         \
@@ -43,6 +25,29 @@ static const int OBSTACLE_GRID[13][23] = {
     }                                                                          \
   } while (0)
 
+#define da_clear(da)                                                           \
+  do {                                                                         \
+    (da).count = 0;                                                            \
+  } while (0)
+
+#define OBSTACLE_GRID_ROWS 13
+#define OBSTACLE_GRID_COLS 23
+
+static const int OBSTACLE_GRID[13][23] = {
+    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+    {0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0},
+    {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
+    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+    {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}};
+
 // Laser
 //
 typedef struct {
@@ -50,6 +55,12 @@ typedef struct {
   int speed;
   bool isActive;
 } Laser;
+
+typedef struct {
+  Laser *items;
+  int count;
+  int capacity;
+} Lasers;
 
 Laser Laser_Create(Vector2 pos, int speed) {
   Laser laser = {pos, speed, true};
@@ -59,7 +70,7 @@ Laser Laser_Create(Vector2 pos, int speed) {
 void Laser_Update(Laser *laser) {
   laser->pos.y += laser->speed;
   if (laser->isActive) {
-    if (laser->pos.y > GetScreenHeight() || laser->pos.y < 0) {
+    if (laser->pos.y > GetScreenHeight() - 100 || laser->pos.y < 25) {
       laser->isActive = false;
     }
   }
@@ -71,12 +82,9 @@ void Laser_Draw(Laser *laser) {
   }
 }
 
-// Lasers list
-typedef struct {
-  Laser *items;
-  int count;
-  int capacity;
-} Lasers;
+Rectangle Laser_GetRect(Laser *laser) {
+  return (Rectangle){laser->pos.x, laser->pos.y, 4, 15};
+}
 
 void Lasers_Remove_inactive(Lasers *lasers) {
   for (int i = 0; i < lasers->count; i++) {
@@ -122,6 +130,10 @@ void Block_Draw(Block *block) {
   DrawRectangle(block->pos.x, block->pos.y, 3, 3, blockColor);
 }
 
+Rectangle Block_GetRect(Block *block) {
+  return (Rectangle){block->pos.x, block->pos.y, 3, 3};
+}
+
 // OBSTACLE
 //
 typedef struct {
@@ -165,11 +177,12 @@ void Obstacle_Draw(Obstacle *obstacle) {
 
 Obstacle *Obstacles_Create() {
   Obstacle *obstacles = malloc(4 * sizeof(Obstacle));
-  int obstacleWidth = sizeof(OBSTACLE_GRID[0]) * 3;
+  int obstacleWidth =
+      (int)(sizeof(OBSTACLE_GRID[0]) / sizeof(OBSTACLE_GRID[0][0])) * 3;
   float gap = (GetScreenWidth() - (4 * obstacleWidth)) / 5;
   for (size_t i = 0; i < 4; i++) {
     float offsetX = (i + 1) * gap + i * obstacleWidth;
-    obstacles[i] = Obstacle_Create((Vector2){offsetX, GetScreenHeight() - 100});
+    obstacles[i] = Obstacle_Create((Vector2){offsetX, GetScreenHeight() - 200});
   }
   return obstacles;
 }
@@ -245,6 +258,12 @@ void Alien_Shoot(Aliens *aliens, Lasers *alienLasers, double alienShootInterval,
   }
 }
 
+Rectangle Alien_GetRect(Alien *alien) {
+  return (Rectangle){alien->pos.x, alien->pos.y,
+                     AlienImages[alien->type - 1].width,
+                     AlienImages[alien->type - 1].height};
+}
+
 void Aliens_Load_images() {
   AlienImages[0] = LoadTexture("assets/alien_1.png");
   AlienImages[1] = LoadTexture("assets/alien_2.png");
@@ -273,12 +292,13 @@ void Aliens_Move_down(Aliens *aliens, int distance) {
 void Aliens_Move(Aliens *aliens, int *direction) {
   for (size_t i = 0; i < aliens->count; ++i) {
     Alien *alien = &aliens->items[i];
-    if (alien->pos.x + AlienImages[alien->type - 1].width > GetScreenWidth()) {
+    if (alien->pos.x + AlienImages[alien->type - 1].width >
+        GetScreenWidth() - 25) {
       *direction = -1;
       Aliens_Move_down(aliens, 4);
     }
 
-    if (alien->pos.x <= 0) {
+    if (alien->pos.x <= 25) {
       *direction = 1;
       Aliens_Move_down(aliens, 4);
     }
@@ -293,7 +313,7 @@ void Aliens_Draw(Aliens *aliens) {
   }
 }
 
-// SPACESHIP
+// MYSTERYSHIP
 //
 typedef struct {
   Texture2D image;
@@ -313,10 +333,10 @@ void Mysteryship_Spawn(Mysteryship *mystery) {
   int side = GetRandomValue(0, 1);
 
   if (side == 0) {
-    mystery->pos.x = 0;
+    mystery->pos.x = 25;
     mystery->speed = 3;
   } else {
-    mystery->pos.x = GetScreenWidth() + mystery->image.width;
+    mystery->pos.x = GetScreenWidth() + mystery->image.width - 25;
     mystery->speed = -3;
   }
   mystery->isAlive = true;
@@ -325,12 +345,21 @@ void Mysteryship_Spawn(Mysteryship *mystery) {
 void Mysteryship_Update(Mysteryship *mystery) {
   if (mystery->isAlive) {
     mystery->pos.x += mystery->speed;
-    if (mystery->pos.x > GetScreenWidth() - mystery->image.width ||
-        mystery->pos.x < 0) {
+    if (mystery->pos.x > GetScreenWidth() - mystery->image.width - 25 ||
+        mystery->pos.x < 25) {
       mystery->isAlive = false;
     }
   }
 }
+
+Rectangle Mysteryship_GetRect(Mysteryship *mystery) {
+  if (mystery->isAlive) {
+    return (Rectangle){mystery->pos.x, mystery->pos.y, mystery->image.width,
+                       mystery->image.height};
+  }
+  return (Rectangle){mystery->pos.x, mystery->pos.y, 0, 0};
+}
+
 void Mysteryship_Draw(Mysteryship *mystery) {
   if (mystery->isAlive) {
     DrawTextureV(mystery->image, mystery->pos, WHITE);
@@ -346,18 +375,20 @@ typedef struct {
   Vector2 pos;
   int speed;
   Lasers lasers;
+  Sound laserSound;
 } Spaceship;
 
 Spaceship Spaceship_Create() {
   Texture2D image = LoadTexture("assets/spaceship.png");
 
   Vector2 pos = {.x = (GetScreenWidth() - image.width) / 2,
-                 .y = GetScreenHeight() - image.height};
+                 .y = GetScreenHeight() - image.height - 100};
 
   int speed = 7;
   Lasers lasers = {0};
+  Sound sound = LoadSound("assets/laser.ogg");
 
-  Spaceship spaceship = {image, pos, speed, lasers};
+  Spaceship spaceship = {image, pos, speed, lasers, sound};
   return spaceship;
 }
 
@@ -367,15 +398,15 @@ void Spaceship_Draw(Spaceship *sp) {
 void Spaceship_Move_right(Spaceship *sp) {
   sp->pos.x += sp->speed;
 
-  if (sp->pos.x > GetScreenWidth() - sp->image.width) {
-    sp->pos.x = GetScreenWidth() - sp->image.width;
+  if (sp->pos.x > GetScreenWidth() - sp->image.width - 20) {
+    sp->pos.x = GetScreenWidth() - sp->image.width - 20;
   }
 }
 void Spaceship_Move_left(Spaceship *sp) {
   sp->pos.x -= sp->speed;
 
-  if (sp->pos.x < 0) {
-    sp->pos.x = 0;
+  if (sp->pos.x < 20) {
+    sp->pos.x = 20;
   }
 }
 
@@ -386,70 +417,333 @@ void Spaceship_Fire(Spaceship *sp) {
 
   da_append(sp->lasers, laser);
 }
+
+Rectangle Spaceship_GetRect(Spaceship *sp) {
+  return (Rectangle){sp->pos.x, sp->pos.y, sp->image.width, sp->image.height};
+}
+
 void Spaceship_Unload(Spaceship *sp) { UnloadTexture(sp->image); }
+
+// GAME RELATED
+//
+typedef struct {
+  int score;
+  int lives;
+  bool isGameOver;
+} GameState;
+
+static GameState game = {.lives = 3, .score = 0, .isGameOver = false};
+
+typedef struct {
+  Spaceship sp;
+  Aliens aliens;
+  Obstacle *obstacles;
+  Mysteryship mystery;
+  Lasers alienLasers;
+  int aliensDirection;
+
+  // timers
+  double lastPlayerFireTime;
+  double lastAlienFireTime;
+  double lastTimeMysteryShipSpawn;
+  double alienShootInterval;
+  float mysteryShipSpawnInterval;
+
+  // sounds
+  Music music;
+  Sound explosion;
+} Game;
+
+void Game_Init(Game *g) {
+  g->sp = Spaceship_Create();
+  da_clear(g->sp.lasers); // reset spaceship lasers
+
+  g->aliens = Aliens_Create();
+  g->aliensDirection = 1;
+
+  if (g->obstacles)
+    free(g->obstacles);
+  g->obstacles = Obstacles_Create();
+
+  g->mystery = Mysteryship_Create((Vector2){100, 100});
+
+  da_clear(g->alienLasers); // reset alien lasers
+
+  // timers
+  g->lastPlayerFireTime = 0;
+  g->lastAlienFireTime = 0;
+  g->lastTimeMysteryShipSpawn = 0;
+  g->alienShootInterval = 0.35;
+  g->mysteryShipSpawnInterval = GetRandomValue(10, 20);
+
+  // sounds
+  g->music = LoadMusicStream("assets/music.ogg");
+  g->explosion = LoadSound("assets/explosion.ogg");
+}
+
+void CheckForCollisions(Aliens *aliens, Spaceship *sp, Obstacle *obstacles,
+                        Mysteryship *mystery, Lasers alienLasers,
+                        Sound explosion) {
+  // Check collisions for the spaceship lasers
+  for (size_t i = 0; i < sp->lasers.count; i++) {
+    Laser *laser = &sp->lasers.items[i];
+    // Player hit the mystery spaceship
+    if (CheckCollisionRecs(Mysteryship_GetRect(mystery),
+                           Laser_GetRect(laser))) {
+      mystery->isAlive = false;
+      laser->isActive = false;
+      game.score += 500;
+      PlaySound(explosion);
+    }
+
+    for (size_t j = 0; j < aliens->count; j++) {
+      Alien *alien = &aliens->items[j];
+      // Player hit alien
+      if (CheckCollisionRecs(Laser_GetRect(laser), Alien_GetRect(alien))) {
+        PlaySound(explosion);
+        da_remove_at(*aliens, j);
+        laser->isActive = false;
+        switch (alien->type) {
+        case 1:
+          game.score += 100;
+          break;
+        case 2:
+          game.score += 200;
+          break;
+        case 3:
+          game.score += 300;
+          break;
+        default:
+          break;
+        }
+      }
+    }
+
+    for (size_t t = 0; t < 4; t++) {
+      Obstacle *obstacle = &obstacles[t];
+      for (size_t j = 0; j < obstacle->blocks.count; j++) {
+        // Player hit obstacle
+        if (CheckCollisionRecs(Laser_GetRect(laser),
+                               Block_GetRect(&obstacle->blocks.items[j]))) {
+
+          da_remove_at(obstacle->blocks, j);
+          laser->isActive = false;
+        }
+      }
+    }
+  }
+
+  // check collisions for alien lasers
+  for (size_t i = 0; i < alienLasers.count; i++) {
+    Laser *laser = &alienLasers.items[i];
+
+    // Alien laser hit player
+    if (CheckCollisionRecs(Laser_GetRect(laser), Spaceship_GetRect(sp))) {
+      printf("You got hit! You have %d lives!\n", game.lives);
+      laser->isActive = false;
+      game.lives--;
+      if (game.lives <= 0) {
+        game.isGameOver = true;
+      }
+    }
+
+    for (size_t t = 0; t < 4; t++) {
+      Obstacle *obstacle = &obstacles[t];
+      for (size_t j = 0; j < obstacle->blocks.count; j++) {
+        // Alien laser hit obstacle
+        if (CheckCollisionRecs(Laser_GetRect(laser),
+                               Block_GetRect(&obstacle->blocks.items[j]))) {
+
+          da_remove_at(obstacle->blocks, j);
+          laser->isActive = false;
+        }
+      }
+    }
+  }
+
+  // check for alien collisions
+  for (size_t i = 0; i < aliens->count; i++) {
+    Alien *alien = &aliens->items[i];
+    for (size_t t = 0; t < 4; t++) {
+      Obstacle *obstacle = &obstacles[t];
+      for (size_t j = 0; j < obstacle->blocks.count; j++) {
+        // Alien hit obstacle
+        if (CheckCollisionRecs(Alien_GetRect(alien),
+                               Block_GetRect(&obstacle->blocks.items[j]))) {
+
+          da_remove_at(obstacle->blocks, j);
+        }
+      }
+    }
+
+    // Alien hit player
+    if (CheckCollisionRecs(Alien_GetRect(alien), Spaceship_GetRect(sp))) {
+      game.lives--;
+      if (game.lives <= 0) {
+        game.isGameOver = true;
+      }
+      printf("You got hit!\n");
+    }
+  }
+}
+
+void saveHighestScoreToFile(int score) {
+  FILE *f = fopen("score.txt", "w");
+  if (!f) {
+    perror("Failed to open score.txt for writing");
+    return;
+  }
+  fprintf(f, "%d\n", score); // write score as text
+  fclose(f);
+}
+
+int getHighestScoreFromFile() {
+  FILE *f = fopen("score.txt", "r");
+
+  if (!f) {
+    printf("ERROR: No score.txt file found.\n");
+    return 0;
+  }
+
+  int score = 0;
+
+  if (fscanf(f, "%d", &score) != 1) {
+    printf("ERROR: something went wrong while reading the contents of "
+           "score.txt.\n");
+    score = 0;
+  }
+
+  fclose(f);
+  return score;
+}
 
 int main(void) {
   Color grey = {29, 29, 27, 255};
+  Color yellow = {243, 216, 63, 255};
+  int offset = 50;
   int screenWidth = 750;
   int screenHeigth = 700;
 
-  InitWindow(screenWidth, screenHeigth, "Space Invaders");
-  SetTargetFPS(60);
+  InitWindow(screenWidth + offset, screenHeigth + 2 * offset, "Space Invaders");
+  InitAudioDevice();
+
   Aliens_Load_images();
+  Font font = LoadFontEx("assets/monogram.ttf", 64, 0, 0);
+  int highestScore = getHighestScoreFromFile();
+  Texture2D spaceshipImage = LoadTexture("assets/spaceship.png");
+  Game gameEntities = {0};
+  Game_Init(&gameEntities);
 
-  Lasers alienLasers = {0};
-  Obstacle *obstacles = Obstacles_Create();
-  Aliens aliens = Aliens_Create();
-
-  Spaceship sp = Spaceship_Create();
-  Mysteryship mystery = Mysteryship_Create((Vector2){100, 100});
-
-  static double lastPlayerFireTime = 0;
-  static double lastAlienFireTime = 0;
-  static double alienShootInterval = 0.50;
-
-  float mysteryShipSpawnInterval = GetRandomValue(10, 20);
-  float lastTimeMysteryShipSpawn = 0.0;
-
-  int aliensDirection = 1;
+  SetTargetFPS(60);
 
   while (!WindowShouldClose()) {
-    double now = GetTime();
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
-      Spaceship_Move_right(&sp);
-    } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
-      Spaceship_Move_left(&sp);
-    } else if (IsKeyDown(KEY_SPACE) && now - lastPlayerFireTime > 0.25) {
-      Spaceship_Fire(&sp);
-      lastPlayerFireTime = now;
+    UpdateMusicStream(gameEntities.music);
+    // -------------------
+    // UPDATE
+    // -------------------
+    if (!game.isGameOver) {
+      double now = GetTime();
+      // Player input
+      if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
+        Spaceship_Move_right(&gameEntities.sp);
+      } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
+        Spaceship_Move_left(&gameEntities.sp);
+      }
+
+      if (IsKeyDown(KEY_SPACE) &&
+          now - gameEntities.lastPlayerFireTime > 0.25) {
+        Spaceship_Fire(&gameEntities.sp);
+        gameEntities.lastPlayerFireTime = now;
+      }
+
+      // Mystery ship spawn
+      if (now - gameEntities.lastTimeMysteryShipSpawn >
+          gameEntities.mysteryShipSpawnInterval) {
+        Mysteryship_Spawn(&gameEntities.mystery);
+        gameEntities.lastTimeMysteryShipSpawn = now;
+        gameEntities.mysteryShipSpawnInterval = GetRandomValue(10, 20);
+      }
+
+      // Collisions
+      CheckForCollisions(&gameEntities.aliens, &gameEntities.sp,
+                         gameEntities.obstacles, &gameEntities.mystery,
+                         gameEntities.alienLasers, gameEntities.explosion);
+
+      // Updates
+      Mysteryship_Update(&gameEntities.mystery);
+      Lasers_Update(&gameEntities.sp.lasers);
+      Aliens_Move(&gameEntities.aliens, &gameEntities.aliensDirection);
+      Alien_Shoot(&gameEntities.aliens, &gameEntities.alienLasers,
+                  gameEntities.alienShootInterval,
+                  &gameEntities.lastAlienFireTime);
+      Lasers_Update(&gameEntities.alienLasers);
     }
 
-    if (now - lastTimeMysteryShipSpawn > mysteryShipSpawnInterval) {
-      Mysteryship_Spawn(&mystery);
-      lastTimeMysteryShipSpawn = GetTime();
-      mysteryShipSpawnInterval = GetRandomValue(10, 20);
-    }
-
-    Mysteryship_Update(&mystery);
-    Lasers_Update(&sp.lasers);
-    Aliens_Move(&aliens, &aliensDirection);
-    Alien_Shoot(&aliens, &alienLasers, alienShootInterval, &lastAlienFireTime);
-    Lasers_Update(&alienLasers);
-
+    // -------------------
+    // DRAW
+    // -------------------
     BeginDrawing();
     ClearBackground(grey);
-    Spaceship_Draw(&sp);
-    Aliens_Draw(&aliens);
-    Obstacles_Draw(obstacles, 4);
-    Mysteryship_Draw(&mystery);
-    Lasers_Draw(&sp.lasers);
-    Lasers_Draw(&alienLasers);
+    DrawRectangleRoundedLines((Rectangle){10, 10, 780, 780}, 0.18f, 20, yellow);
+    DrawLineEx((Vector2){25, 730}, (Vector2){775, 730}, 2, yellow);
+
+    if (game.isGameOver) {
+      DrawTextEx(font, "[PRESS ENTER]", (Vector2){50, 740}, 34, 2, yellow);
+      DrawTextEx(font, "GAME OVER", (Vector2){570, 740}, 34, 2, yellow);
+
+      if (game.score > highestScore) {
+        highestScore = game.score;
+        saveHighestScoreToFile(game.score);
+      }
+
+      if (IsKeyPressed(KEY_ENTER)) {
+        game.lives = 3;
+        game.score = 0;
+        game.isGameOver = false;
+
+        Game_Init(&gameEntities);
+      }
+    } else {
+      float x = 50.0;
+
+      for (size_t i = 0; i < game.lives; i++) {
+        DrawTextureV(spaceshipImage, (Vector2){x, 745}, WHITE);
+        x += 50;
+      }
+      DrawTextEx(font, "LEVEL 01", (Vector2){570, 740}, 34, 2, yellow);
+    }
+
+    DrawTextEx(font, "SCORE", (Vector2){50, 15}, 34, 2, yellow);
+
+    char scoreText[16];
+    snprintf(scoreText, sizeof(scoreText), "%05d", game.score);
+    DrawTextEx(font, scoreText, (Vector2){50, 40}, 34, 2, yellow);
+
+    char highestScoreText[16];
+    snprintf(highestScoreText, sizeof(highestScoreText), "%05d", highestScore);
+
+    DrawTextEx(font, "HIGH-SCORE", (Vector2){570, 15}, 34, 2, yellow);
+    DrawTextEx(font, highestScoreText, (Vector2){660, 40}, 34, 2, yellow);
+
+    Spaceship_Draw(&gameEntities.sp);
+    Aliens_Draw(&gameEntities.aliens);
+    Obstacles_Draw(gameEntities.obstacles, 4);
+    Mysteryship_Draw(&gameEntities.mystery);
+    Lasers_Draw(&gameEntities.sp.lasers);
+    Lasers_Draw(&gameEntities.alienLasers);
+
     EndDrawing();
   }
 
-  Spaceship_Unload(&sp);
+  UnloadTexture(spaceshipImage);
+  Spaceship_Unload(&gameEntities.sp);
   Aliens_Unload_images();
-  Mysteryship_Unload(&mystery);
+  Mysteryship_Unload(&gameEntities.mystery);
+  UnloadMusicStream(gameEntities.music);
+  UnloadSound(gameEntities.explosion);
+  UnloadSound(gameEntities.sp.laserSound);
+  free(gameEntities.obstacles);
+  CloseAudioDevice();
 
   CloseWindow();
   return 0;
