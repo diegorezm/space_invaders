@@ -1,55 +1,104 @@
 #include "raylib.h"
+#include <stdio.h>
 
-static const int SCREEN_WIDTH = 1200;
-static const int SCREEN_HEIGTH = 800;
-
+// SPACESHIP
+//
 typedef struct {
-  int x;
-  int y;
-  int speedX;
-  int speedY;
-  int radius;
-} Ball;
+  Texture2D image;
+  Vector2 pos;
+  int speed;
+} Spaceship;
 
-Ball Ball_Create(int x, int y, int radius, int speedX, int speedY) {
-  Ball b = {x, y, speedX, speedY, radius};
-  return b;
+Spaceship Spaceship_Create() {
+  Texture2D image = LoadTexture("assets/spaceship.png");
+
+  Vector2 pos = {.x = (GetScreenWidth() - image.width) / 2,
+                 .y = GetScreenHeight() - image.height};
+
+  int speed = 7;
+
+  Spaceship spaceship = {image, pos, speed};
+  return spaceship;
 }
 
-void Ball_Update(Ball *ball, int screenWidth, int screenHeight) {
-  ball->x += ball->speedX;
-  ball->y += ball->speedY;
+void Spaceship_Draw(Spaceship *sp) {
+  DrawTextureV(sp->image, sp->pos, RAYWHITE);
+}
+void Spaceship_Move_right(Spaceship *sp) {
+  sp->pos.x += sp->speed;
 
-  if ((ball->x + ball->radius) >= screenWidth ||
-      (ball->x - ball->radius) <= 0) {
-    ball->speedX *= -1;
+  if (sp->pos.x > GetScreenWidth() - sp->image.width) {
+    sp->pos.x = GetScreenWidth() - sp->image.width;
   }
-  if ((ball->y + ball->radius) >= screenHeight ||
-      (ball->y - ball->radius) <= 0) {
-    ball->speedY *= -1;
+}
+void Spaceship_Move_left(Spaceship *sp) {
+  sp->pos.x -= sp->speed;
+
+  if (sp->pos.x < 0) {
+    sp->pos.x = 0;
   }
 }
 
-void Ball_Draw(const Ball *ball) {
-  DrawCircle(ball->x, ball->y, ball->radius, RED);
+void Spaceship_Fire(Spaceship *sp) {}
+void Spaceship_Unload(Spaceship *sp) { UnloadTexture(sp->image); }
+
+// Laser
+//
+typedef struct {
+  Vector2 pos;
+  int speed;
+  bool isActive;
+} Laser;
+
+Laser Laser_Create(Vector2 pos, int speed) {
+  Laser laser = {pos, speed, true};
+  return laser;
+}
+
+void Laser_Update(Laser *laser) {
+  laser->pos.y += laser->speed;
+  if (laser->isActive) {
+    if (laser->pos.y > GetScreenHeight() || laser->pos.y < 0) {
+      laser->isActive = false;
+    }
+  }
+}
+void Laser_Draw(Laser *laser) {
+  if (laser->isActive) {
+    Color laserColor = {243, 216, 63, 255};
+    DrawRectangle(laser->pos.x, laser->pos.y, 4, 15, laserColor);
+  }
 }
 
 int main(void) {
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGTH, "Space Invaders");
-  SetTargetFPS(60);
-  Ball ball;
+  Color grey = {29, 29, 27, 255};
+  int screenWidth = 750;
+  int screenHeigth = 700;
 
-  ball = Ball_Create(0, 0, 12, 12, 12);
+  InitWindow(screenWidth, screenHeigth, "Space Invaders");
+
+  Spaceship sp = Spaceship_Create();
+  Laser laser = Laser_Create((Vector2){.x = 100, .y = 100}, 7);
+
+  SetTargetFPS(60);
 
   while (!WindowShouldClose()) {
+
+    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
+      Spaceship_Move_right(&sp);
+    } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
+      Spaceship_Move_left(&sp);
+    }
+
+    Laser_Update(&laser);
+
     BeginDrawing();
-    ClearBackground(RAYWHITE);
-    int x = MeasureText("Hello world!", 20);
-    Ball_Draw(&ball);
-    DrawText("Hello world!", SCREEN_HEIGTH / 2, x, 20, DARKGRAY);
+    ClearBackground(grey);
+    Spaceship_Draw(&sp);
+    Laser_Draw(&laser);
     EndDrawing();
   }
-
+  Spaceship_Unload(&sp);
   CloseWindow();
   return 0;
 }
