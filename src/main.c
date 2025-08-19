@@ -180,6 +180,119 @@ void Obstacles_Draw(Obstacle *obstacles, size_t count) {
   }
 }
 
+// ALIEN
+//
+typedef struct {
+  int type;
+  Vector2 pos;
+} Alien;
+
+static Texture2D AlienImages[3];
+
+typedef struct {
+  Alien *items;
+  int count;
+  int capacity;
+} Aliens;
+
+Alien Alien_Create(int type, Vector2 pos) {
+  Alien alien = {.type = type, .pos = pos};
+  return alien;
+}
+
+Aliens Aliens_Create() {
+  Aliens aliens = {0};
+  int cell_size = 55;
+  int row_size = 55;
+
+  for (size_t row = 0; row < 5; row++) {
+    for (size_t col = 0; col < 11; col++) {
+      int alienType;
+      if (row == 0) {
+        alienType = 3;
+      } else if (row == 1 || row == 2) {
+        alienType = 2;
+      } else {
+        alienType = 1;
+      }
+
+      float x = 75 + col * row_size;
+      float y = 110 + row * cell_size;
+
+      Alien alien = Alien_Create(alienType, (Vector2){x, y});
+      da_append(aliens, alien);
+    }
+  }
+  return aliens;
+}
+
+void Alien_Shoot(Aliens *aliens, Lasers *alienLasers, double alienShootInterval,
+                 double *timeLastAlienFired) {
+  double currentTime = GetTime();
+  if (currentTime - *timeLastAlienFired >= alienShootInterval &&
+      aliens->count > 0) {
+
+    *timeLastAlienFired = currentTime;
+    int randomIndex = GetRandomValue(0, aliens->count - 1);
+    Alien *alien = &aliens->items[randomIndex];
+
+    Laser laser = Laser_Create(
+        (Vector2){alien->pos.x + AlienImages[alien->type - 1].width / 2,
+                  alien->pos.y + AlienImages[alien->type - 1].height},
+        6);
+
+    da_append(*alienLasers, laser);
+  }
+}
+
+void Aliens_Load_images() {
+  AlienImages[0] = LoadTexture("assets/alien_1.png");
+  AlienImages[1] = LoadTexture("assets/alien_2.png");
+  AlienImages[2] = LoadTexture("assets/alien_3.png");
+}
+
+void Aliens_Unload_images() {
+  for (size_t i = 0; i < 3; i++) {
+    UnloadTexture(AlienImages[i]);
+  }
+}
+
+void Alien_Update(Alien *alien, int direction) { alien->pos.x += direction; }
+
+void Alien_Draw(Alien *alien) {
+  DrawTextureV(AlienImages[alien->type - 1], alien->pos, WHITE);
+}
+
+void Aliens_Move_down(Aliens *aliens, int distance) {
+  for (size_t i = 0; i < aliens->count; ++i) {
+    Alien *alien = &aliens->items[i];
+    alien->pos.y += distance;
+  }
+}
+
+void Aliens_Move(Aliens *aliens, int *direction) {
+  for (size_t i = 0; i < aliens->count; ++i) {
+    Alien *alien = &aliens->items[i];
+    if (alien->pos.x + AlienImages[alien->type - 1].width > GetScreenWidth()) {
+      *direction = -1;
+      Aliens_Move_down(aliens, 4);
+    }
+
+    if (alien->pos.x <= 0) {
+      *direction = 1;
+      Aliens_Move_down(aliens, 4);
+    }
+    Alien_Update(alien, *direction);
+  }
+}
+
+void Aliens_Draw(Aliens *aliens) {
+  for (size_t i = 0; i < aliens->count; ++i) {
+    Alien *alien = &aliens->items[i];
+    Alien_Draw(alien);
+  }
+}
+
 // SPACESHIP
 //
 typedef struct {
@@ -236,12 +349,19 @@ int main(void) {
 
   InitWindow(screenWidth, screenHeigth, "Space Invaders");
   SetTargetFPS(60);
+  Aliens_Load_images();
 
+  Lasers alienLasers = {0};
   Obstacle *obstacles = Obstacles_Create();
+  Aliens aliens = Aliens_Create();
 
   Spaceship sp = Spaceship_Create();
 
-  static double lastFireTime = 0;
+  static double lastPlayerFireTime = 0;
+  static double lastAlienFireTime = 0;
+  static double alienShootInterval = 0.50;
+
+  int aliensDirection = 1;
 
   while (!WindowShouldClose()) {
     double now = GetTime();
@@ -249,21 +369,28 @@ int main(void) {
       Spaceship_Move_right(&sp);
     } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
       Spaceship_Move_left(&sp);
-    } else if (IsKeyDown(KEY_SPACE) && now - lastFireTime > 0.25) {
+    } else if (IsKeyDown(KEY_SPACE) && now - lastPlayerFireTime > 0.25) {
       Spaceship_Fire(&sp);
-      lastFireTime = now;
+      lastPlayerFireTime = now;
     }
 
     Lasers_Update(&sp.lasers);
+    Aliens_Move(&aliens, &aliensDirection);
+    Alien_Shoot(&aliens, &alienLasers, alienShootInterval, &lastAlienFireTime);
+    Lasers_Update(&alienLasers);
 
     BeginDrawing();
     ClearBackground(grey);
     Spaceship_Draw(&sp);
+    Aliens_Draw(&aliens);
     Obstacles_Draw(obstacles, 4);
     Lasers_Draw(&sp.lasers);
+    Lasers_Draw(&alienLasers);
     EndDrawing();
   }
+
   Spaceship_Unload(&sp);
+  Aliens_Unload_images();
   CloseWindow();
   return 0;
 }
