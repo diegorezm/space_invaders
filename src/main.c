@@ -516,6 +516,7 @@ void Game_NextLevel(Game *g) {
   g->lastAlienFireTime = 0;
   g->lastTimeMysteryShipSpawn = 0;
   g->mysteryShipSpawnInterval = GetRandomValue(10, 20);
+  g->alienShootInterval = 0.35 + (game.level - 1) * 0.05;
 
   // Respawn mystery ship
   g->mystery = Mysteryship_Create((Vector2){100, 100});
