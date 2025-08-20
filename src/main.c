@@ -48,12 +48,25 @@ static const int OBSTACLE_GRID[13][23] = {
     {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
     {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}};
 
+// GAME STATE
+//
+typedef struct {
+  unsigned int score;
+  unsigned int lives;
+  unsigned int level;
+  bool isGameOver;
+} GameState;
+
+static GameState game = {
+    .lives = 3, .score = 0, .level = 1, .isGameOver = false};
+
 // Laser
 //
 typedef struct {
   Vector2 pos;
   int speed;
   bool isActive;
+  Color color;
 } Laser;
 
 typedef struct {
@@ -62,8 +75,8 @@ typedef struct {
   int capacity;
 } Lasers;
 
-Laser Laser_Create(Vector2 pos, int speed) {
-  Laser laser = {pos, speed, true};
+Laser Laser_Create(Vector2 pos, int speed, Color color) {
+  Laser laser = {pos, speed, true, color};
   return laser;
 }
 
@@ -77,8 +90,8 @@ void Laser_Update(Laser *laser) {
 }
 void Laser_Draw(Laser *laser) {
   if (laser->isActive) {
-    Color laserColor = {243, 216, 63, 255};
-    DrawRectangleV(laser->pos, (Vector2){4, 15}, laserColor);
+
+    DrawRectangleV(laser->pos, (Vector2){4, 15}, laser->color);
   }
 }
 
@@ -249,10 +262,11 @@ void Alien_Shoot(Aliens *aliens, Lasers *alienLasers, double alienShootInterval,
     int randomIndex = GetRandomValue(0, aliens->count - 1);
     Alien *alien = &aliens->items[randomIndex];
 
+    Color laserColor = {237, 41, 57, 255};
     Laser laser = Laser_Create(
         (Vector2){alien->pos.x + AlienImages[alien->type - 1].width / 2,
                   alien->pos.y + AlienImages[alien->type - 1].height},
-        6);
+        6, laserColor);
 
     da_append(*alienLasers, laser);
   }
@@ -285,7 +299,13 @@ void Alien_Draw(Alien *alien) {
 void Aliens_Move_down(Aliens *aliens, int distance) {
   for (size_t i = 0; i < aliens->count; ++i) {
     Alien *alien = &aliens->items[i];
-    alien->pos.y += distance;
+    int speed = 0;
+
+    if (game.level > 1) {
+      speed = game.level * 0.5;
+    }
+
+    alien->pos.y += distance + speed;
   }
 }
 
@@ -411,9 +431,10 @@ void Spaceship_Move_left(Spaceship *sp) {
 }
 
 void Spaceship_Fire(Spaceship *sp) {
-  Laser laser = {
-      (Vector2){.x = sp->pos.x + sp->image.width / 2 - 2, .y = sp->pos.y - 15},
-      -6, true};
+  Color laserColor = {243, 216, 63, 255};
+  Laser laser = Laser_Create(
+      (Vector2){sp->pos.x + sp->image.width / 2 - 2, sp->pos.y - 15}, -6,
+      laserColor);
 
   da_append(sp->lasers, laser);
 }
@@ -424,15 +445,8 @@ Rectangle Spaceship_GetRect(Spaceship *sp) {
 
 void Spaceship_Unload(Spaceship *sp) { UnloadTexture(sp->image); }
 
-// GAME RELATED
+// GAME ENTITIES
 //
-typedef struct {
-  int score;
-  int lives;
-  bool isGameOver;
-} GameState;
-
-static GameState game = {.lives = 3, .score = 0, .isGameOver = false};
 
 typedef struct {
   Spaceship sp;
@@ -473,7 +487,9 @@ void Game_Init(Game *g) {
   g->lastPlayerFireTime = 0;
   g->lastAlienFireTime = 0;
   g->lastTimeMysteryShipSpawn = 0;
+
   g->alienShootInterval = 0.35;
+
   g->mysteryShipSpawnInterval = GetRandomValue(10, 20);
 
   // sounds
@@ -481,9 +497,33 @@ void Game_Init(Game *g) {
   g->explosion = LoadSound("assets/explosion.ogg");
 }
 
+void Game_NextLevel(Game *g) {
+  game.level++;
+
+  // Reset aliens
+  g->aliens = Aliens_Create();
+  g->aliensDirection = 1;
+
+  // Reset obstacles
+  free(g->obstacles);
+  g->obstacles = Obstacles_Create();
+
+  // Clear lasers
+  da_clear(g->sp.lasers);
+  da_clear(g->alienLasers);
+
+  // Reset timers
+  g->lastAlienFireTime = 0;
+  g->lastTimeMysteryShipSpawn = 0;
+  g->mysteryShipSpawnInterval = GetRandomValue(10, 20);
+
+  // Respawn mystery ship
+  g->mystery = Mysteryship_Create((Vector2){100, 100});
+}
+
 void CheckForCollisions(Aliens *aliens, Spaceship *sp, Obstacle *obstacles,
                         Mysteryship *mystery, Lasers alienLasers,
-                        Sound explosion) {
+                        Sound explosion, Game *g) {
   // Check collisions for the spaceship lasers
   for (size_t i = 0; i < sp->lasers.count; i++) {
     Laser *laser = &sp->lasers.items[i];
@@ -502,6 +542,7 @@ void CheckForCollisions(Aliens *aliens, Spaceship *sp, Obstacle *obstacles,
       if (CheckCollisionRecs(Laser_GetRect(laser), Alien_GetRect(alien))) {
         PlaySound(explosion);
         da_remove_at(*aliens, j);
+
         laser->isActive = false;
         switch (alien->type) {
         case 1:
@@ -515,6 +556,10 @@ void CheckForCollisions(Aliens *aliens, Spaceship *sp, Obstacle *obstacles,
           break;
         default:
           break;
+        }
+
+        if (aliens->count <= 0) {
+          Game_NextLevel(g);
         }
       }
     }
@@ -667,7 +712,8 @@ int main(void) {
       // Collisions
       CheckForCollisions(&gameEntities.aliens, &gameEntities.sp,
                          gameEntities.obstacles, &gameEntities.mystery,
-                         gameEntities.alienLasers, gameEntities.explosion);
+                         gameEntities.alienLasers, gameEntities.explosion,
+                         &gameEntities);
 
       // Updates
       Mysteryship_Update(&gameEntities.mystery);
@@ -710,7 +756,14 @@ int main(void) {
         DrawTextureV(spaceshipImage, (Vector2){x, 745}, WHITE);
         x += 50;
       }
-      DrawTextEx(font, "LEVEL 01", (Vector2){570, 740}, 34, 2, yellow);
+
+      char levelNumberText[16];
+      snprintf(levelNumberText, sizeof(game.level), "%02d", game.level);
+
+      char levelText[24];
+      sprintf(levelText, "LEVEL %s", levelNumberText);
+
+      DrawTextEx(font, levelText, (Vector2){570, 740}, 34, 2, yellow);
     }
 
     DrawTextEx(font, "SCORE", (Vector2){50, 15}, 34, 2, yellow);
