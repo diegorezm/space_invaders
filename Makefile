@@ -19,13 +19,19 @@ raylib:
 web: raylib_web
 	rm -rf dist
 	mkdir dist
-	$(CC_WEB) $(CFLAGS_WEB) src/main.c -o dist/index.html $(LDFLAGS_WEB) $(LIBS_WEB) \
+	# $(CC_WEB) $(CFLAGS_WEB) src/main.c -o dist/index.html $(LDFLAGS_WEB) $(LIBS_WEB) \
+	# 	--shell-file ./shell.html \
+	# 	--preload-file assets
+	$(CC_WEB) $(CFLAGS_WEB) src/main.c -o dist/index.html \
+		-Lexternal/raylib/src -lraylib \
+		-s USE_GLFW=3 -s ASYNCIFY -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 \
 		--shell-file ./shell.html \
 		--preload-file assets
 
 raylib_web:
 	# $(MAKE) -C $(RAYLIB_SRC) clean
 	$(MAKE) -C $(RAYLIB_SRC) PLATFORM=PLATFORM_WEB
+	cp external/raylib/src/*.h include/
 
 main: src/main.c
 	$(CC) $(CFLAGS) src/main.c -o main $(LDFLAGS) $(LIBS)
