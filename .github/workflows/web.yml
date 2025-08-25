@@ -23,8 +23,7 @@ jobs:
 
       - name: Build Web
         run: |
-          make -C external/raylib/src PLATFORM=PLATFORM_WEB EMSDK_PATH="$EMSDK" -B
-          cp external/raylib/src/*.h include/
+          make web
 
       - name: Upload dist
         uses: actions/upload-pages-artifact@v3
