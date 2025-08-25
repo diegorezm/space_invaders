@@ -25,8 +25,8 @@ web: raylib_web
 
 raylib_web:
 	# $(MAKE) -C $(RAYLIB_SRC) clean
-  make -C $(RAYLIB_SRC) PLATFORM=PLATFORM_WEB EMSDK_PATH="$EMSDK" -B
-  cp external/raylib/src/*.h include/
+	make -C $(RAYLIB_SRC) PLATFORM=PLATFORM_WEB EMSDK_PATH="$EMSDK" -B
+	cp external/raylib/src/*.h include/
 
 main: src/main.c
 	$(CC) $(CFLAGS) src/main.c -o main $(LDFLAGS) $(LIBS)
