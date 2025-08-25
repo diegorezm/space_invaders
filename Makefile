@@ -17,7 +17,7 @@ raylib:
 	cp external/raylib/src/*.h include/
 
 web: raylib_web
-	$(CC_WEB) $(CFLAGS_WEB) src/main.c -o index.html $(LDFLAGS_WEB) $(LIBS_WEB) \
+	$(CC_WEB) $(CFLAGS_WEB) src/main.c -o dist/index.html $(LDFLAGS_WEB) $(LIBS_WEB) \
 		--shell-file ./shell.html \
 		--preload-file assets
 
