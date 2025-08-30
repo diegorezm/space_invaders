@@ -48,6 +48,11 @@ static const int OBSTACLE_GRID[13][23] = {
     {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
     {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}};
 
+static const Color BACKGROUND_COLOR = {240, 237, 229, 255};
+static const Color FOREGROUND_COLOR = {49, 47, 44, 255};
+static const Color PRIMARY_COLOR = {49, 47, 44, 255};
+static const Color RED_COLOR = {234, 39, 39, 255};
+
 // GAME STATE
 //
 typedef struct {
@@ -139,8 +144,7 @@ Block Block_Create(Vector2 pos) {
 }
 
 void Block_Draw(Block *block) {
-  Color blockColor = {243, 216, 63, 255};
-  DrawRectangle(block->pos.x, block->pos.y, 3, 3, blockColor);
+  DrawRectangle(block->pos.x, block->pos.y, 3, 3, PRIMARY_COLOR);
 }
 
 Rectangle Block_GetRect(Block *block) {
@@ -262,11 +266,10 @@ void Alien_Shoot(Aliens *aliens, Lasers *alienLasers, double alienShootInterval,
     int randomIndex = GetRandomValue(0, aliens->count - 1);
     Alien *alien = &aliens->items[randomIndex];
 
-    Color laserColor = {237, 41, 57, 255};
     Laser laser = Laser_Create(
         (Vector2){alien->pos.x + AlienImages[alien->type - 1].width / 2,
                   alien->pos.y + AlienImages[alien->type - 1].height},
-        6, laserColor);
+        6, RED_COLOR);
 
     da_append(*alienLasers, laser);
   }
@@ -431,10 +434,9 @@ void Spaceship_Move_left(Spaceship *sp) {
 }
 
 void Spaceship_Fire(Spaceship *sp) {
-  Color laserColor = {243, 216, 63, 255};
   Laser laser = Laser_Create(
       (Vector2){sp->pos.x + sp->image.width / 2 - 2, sp->pos.y - 15}, -6,
-      laserColor);
+      PRIMARY_COLOR);
 
   da_append(sp->lasers, laser);
 }
@@ -639,7 +641,7 @@ void saveHighestScoreToFile(int score) {
     perror("Failed to open score.txt for writing");
     return;
   }
-  fprintf(f, "%d\n", score); // write score as text
+  fprintf(f, "%d\n", score);
   fclose(f);
 }
 
@@ -664,8 +666,6 @@ int getHighestScoreFromFile() {
 }
 
 int main(void) {
-  Color grey = {29, 29, 27, 255};
-  Color yellow = {243, 216, 63, 255};
   int offset = 50;
   int screenWidth = 750;
   int screenHeigth = 700;
@@ -730,13 +730,16 @@ int main(void) {
     // DRAW
     // -------------------
     BeginDrawing();
-    ClearBackground(grey);
-    DrawRectangleRoundedLines((Rectangle){10, 10, 780, 780}, 0.18f, 20, yellow);
-    DrawLineEx((Vector2){25, 730}, (Vector2){775, 730}, 2, yellow);
+    ClearBackground(BACKGROUND_COLOR);
+    DrawRectangleRoundedLines((Rectangle){10, 10, 780, 780}, 0.01f, 40,
+                              FOREGROUND_COLOR);
+    DrawLineEx((Vector2){25, 730}, (Vector2){775, 730}, 2, FOREGROUND_COLOR);
 
     if (game.isGameOver) {
-      DrawTextEx(font, "[PRESS ENTER]", (Vector2){50, 740}, 34, 2, yellow);
-      DrawTextEx(font, "GAME OVER", (Vector2){570, 740}, 34, 2, yellow);
+      DrawTextEx(font, "[PRESS ENTER]", (Vector2){50, 740}, 34, 2,
+                 FOREGROUND_COLOR);
+      DrawTextEx(font, "GAME OVER", (Vector2){570, 740}, 34, 2,
+                 FOREGROUND_COLOR);
 
       if (game.score > highestScore) {
         highestScore = game.score;
@@ -764,20 +767,21 @@ int main(void) {
       char levelText[24];
       sprintf(levelText, "LEVEL %s", levelNumberText);
 
-      DrawTextEx(font, levelText, (Vector2){570, 740}, 34, 2, yellow);
+      DrawTextEx(font, levelText, (Vector2){570, 740}, 34, 2, FOREGROUND_COLOR);
     }
 
-    DrawTextEx(font, "SCORE", (Vector2){50, 15}, 34, 2, yellow);
+    DrawTextEx(font, "SCORE", (Vector2){50, 15}, 34, 2, FOREGROUND_COLOR);
 
     char scoreText[16];
     snprintf(scoreText, sizeof(scoreText), "%05d", game.score);
-    DrawTextEx(font, scoreText, (Vector2){50, 40}, 34, 2, yellow);
+    DrawTextEx(font, scoreText, (Vector2){50, 40}, 34, 2, FOREGROUND_COLOR);
 
     char highestScoreText[16];
     snprintf(highestScoreText, sizeof(highestScoreText), "%05d", highestScore);
 
-    DrawTextEx(font, "HIGH-SCORE", (Vector2){570, 15}, 34, 2, yellow);
-    DrawTextEx(font, highestScoreText, (Vector2){660, 40}, 34, 2, yellow);
+    DrawTextEx(font, "HIGH-SCORE", (Vector2){570, 15}, 34, 2, FOREGROUND_COLOR);
+    DrawTextEx(font, highestScoreText, (Vector2){660, 40}, 34, 2,
+               FOREGROUND_COLOR);
 
     Spaceship_Draw(&gameEntities.sp);
     Aliens_Draw(&gameEntities.aliens);
